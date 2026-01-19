@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // Config
   // =========================
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = "https://backend-plataforma-ftw7.onrender.com";
 
   // =========================
   // Elementos base
