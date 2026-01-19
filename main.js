@@ -615,7 +615,7 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
         const gastosTotales = cuotaTotal + cuotaTotalConyuge + gastosFamiliaresTotales;
         const ingresoNeto = ingresoBruto - gastosTotales;
         const ingresoDisponible = ingresoNeto * 0.50;
-        const indicadorEndeudamiento = cuotaFinal / ingresoDisponible;
+        const indicadorEndeudamiento = ingresoDisponible / cuotaFinal;
         const porcEntrada = (entrada/valorVehiculo)*100;
 
         //Árbol de decisión
