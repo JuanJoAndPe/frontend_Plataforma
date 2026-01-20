@@ -1619,7 +1619,7 @@ window.savePrecalificacionToHistory = function(item) {
   const payload = {
     fechaISO: safe.fechaISO || new Date().toISOString(),
     cedulaDeudor: String(safe.cedulaDeudor || ""),
-    cedulaConyuge: String(safe.cedulaConyuge || ""),
+    nombreDeudor: String(safe.nombreDeudor || ""),
     marca: String(safe.marca || ""),
     modelo: String(safe.modelo || ""),
     monto: Number(safe.monto || 0),
@@ -2277,7 +2277,7 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
         document.getElementById('resultados').innerHTML = resultadosHTML;
         document.getElementById('decision').innerHTML = FinalDecision;
 
-        // Guardar historial en backend (best-effort, no rompe el flujo)
+        // Guardar historial en backend
         try {
           if (typeof window.savePrecalificacionToHistory === 'function') {
             window.savePrecalificacionToHistory({
