@@ -1,21 +1,19 @@
+console.log("MAIN.JS VERSION: 2026-01-20 FIXED");
+
+//ACTUALIZAR MONTO
 function actualizarMonto() {
   const valorEl = document.getElementById('valor');
   const entradaEl = document.getElementById('entrada');
   const dispositivoEl = document.getElementById('dispositivo');
   const montoEl = document.getElementById('monto');
 
-  // Seguridad por si el DOM no está listo
   if (!valorEl || !entradaEl || !montoEl) return;
 
   const valorVehiculo = parseFloat(valorEl.value);
   const entrada = parseFloat(entradaEl.value);
-
-  // CLAVE: si está vacío o NaN, usar 0
   const dispositivo = dispositivoEl && !isNaN(parseFloat(dispositivoEl.value))
     ? parseFloat(dispositivoEl.value)
     : 0;
-
-  // Si valor o entrada no son válidos, limpiamos monto
   if (isNaN(valorVehiculo) || isNaN(entrada)) {
     montoEl.value = "";
     return;
@@ -23,7 +21,6 @@ function actualizarMonto() {
 
   const montoNum = (valorVehiculo - entrada) + dispositivo;
 
-  // Protección extra
   if (isNaN(montoNum) || montoNum < 0) {
     montoEl.value = "";
     return;
@@ -31,7 +28,7 @@ function actualizarMonto() {
 
   montoEl.value = montoNum.toFixed(2);
 }
-// Convierte un data URI (data:application/pdf;base64,...) a base64 puro
+
 function dataUriToBase64(dataUri) {
   const s = String(dataUri || "");
   const idx = s.indexOf("base64,");
@@ -39,9 +36,8 @@ function dataUriToBase64(dataUri) {
 }
 
 
-// ===============================
 // HISTORIAL PRECALIFICACIONES (Backend)
-// ===============================
+
 const BACKEND_BASE = "https://backend-plataforma-ftw7.onrender.com";
 
 function getAuthToken() {
@@ -77,7 +73,7 @@ async function apiFetch(path, options = {}) {
 
 let __precalHistCache = [];
 
-async function fetchPrecalHistory(limit = 50) {
+async function fetchPrecalHistory(limit = 100) {
   const data = await apiFetch(`/precalificaciones/historial?limit=${encodeURIComponent(String(limit))}`, { method: "GET" });
   const list =
     (Array.isArray(data?.items) && data.items) ||
@@ -122,7 +118,7 @@ function renderPrecalHistory() {
         const pk = h?.pk || d?.pk || "";
         const fecha = formatFechaEC(d.fechaISO || h?.createdAt);
         const ced = String(d.cedulaDeudor || "").trim();
-        const nombreDeudor = String(d.nombreDeudor || d.nombresDeudor || d.nombre || d.nombreRazonSocial || "").trim();
+        const nombres = String(d.nombreDeudor || d.nombresDeudor || d.nombre || d.nombreRazonSocial || "").trim();
         const decision = String(d.decisionFinal || "").trim();
         const monto = isFinite(Number(d.monto)) ? Number(d.monto).toFixed(2) : "";
         const cuota = isFinite(Number(d.cuota)) ? Number(d.cuota).toFixed(2) : "";
@@ -134,7 +130,7 @@ function renderPrecalHistory() {
           <div class="card" style="margin-top:12px;">
             <div class="card__header" style="align-items:flex-start;">
               <div>
-                <h3 class="card__title" style="margin:0;">${ced || "(sin cédula)"} · ${nombreDeudor || "(sin nombre)"} · ${decision || "(sin decisión)"}</h3>
+                <h3 class="card__title" style="margin:0;">${ced} · ${nombres} · ${decision}</h3>
                 <p class="hint" style="margin:4px 0 0 0;">${fecha}${veh ? ` · ${veh}` : ""}${conc ? ` · ${conc}` : ""}</p>
               </div>
               <div class="card__header-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -175,41 +171,103 @@ function loadHistoryItemToForm(pk) {
 
   const setVal = (id, v) => {
     const el = document.getElementById(id);
-    if (el) el.value = (v ?? "");
+    if (!el) return;
+    // inputs numéricos: deja vacío si no hay valor
+    if (el.type === "number" && (v === null || v === undefined || v === "")) {
+      el.value = "";
+      return;
+    }
+    el.value = (v ?? "");
   };
 
   setVal("marca", d.marca);
   setVal("modelo", d.modelo);
-  setVal("valor", d.valorVehiculo ? Number(d.valorVehiculo).toFixed(2) : "");
-  setVal("entrada", d.entrada ? Number(d.entrada).toFixed(2) : "");
-  setVal("dispositivo", d.dispositivo ? Number(d.dispositivo).toFixed(2) : "");
-  setVal("monto", d.monto ? Number(d.monto).toFixed(2) : "");
+
+  // acepta valorVehiculo o valor
+  const vv = (d.valorVehiculo ?? d.valor ?? "");
+  setVal("valor", vv !== "" ? Number(vv).toFixed(2) : "");
+
+  setVal("entrada", d.entrada !== undefined && d.entrada !== null && d.entrada !== "" ? Number(d.entrada).toFixed(2) : "");
+  setVal("dispositivo", d.dispositivo !== undefined && d.dispositivo !== null && d.dispositivo !== "" ? Number(d.dispositivo).toFixed(2) : "");
+
+  // monto guardado o recalculado
+  const m = (d.monto ?? "");
+  setVal("monto", m !== "" ? Number(m).toFixed(2) : "");
+
   setVal("plazo", d.plazo || "");
   setVal("cedulaDeudor", d.cedulaDeudor);
   setVal("cedulaConyuge", d.cedulaConyuge);
-  setVal("ingresoDeudor", d.ingresoDeudor ? Number(d.ingresoDeudor).toFixed(2) : "");
-  setVal("ingresoConyuge", d.ingresoConyuge ? Number(d.ingresoConyuge).toFixed(2) : "");
-  setVal("otrosIngresos", d.otrosIngresos ? Number(d.otrosIngresos).toFixed(2) : "");
+
+  setVal("ingresoDeudor", d.ingresoDeudor !== undefined && d.ingresoDeudor !== null && d.ingresoDeudor !== "" ? Number(d.ingresoDeudor).toFixed(2) : "");
+  setVal("ingresoConyuge", d.ingresoConyuge !== undefined && d.ingresoConyuge !== null && d.ingresoConyuge !== "" ? Number(d.ingresoConyuge).toFixed(2) : "");
+  setVal("otrosIngresos", d.otrosIngresos !== undefined && d.otrosIngresos !== null && d.otrosIngresos !== "" ? Number(d.otrosIngresos).toFixed(2) : "");
+
   setVal("estado_civil", d.estadoCivil || "");
-  setVal("numerohijos", d.numerohijos || "");
-  setVal("Activos", d.activos ? Number(d.activos).toFixed(2) : "");
-  setVal("separacion", d.separacionBienes ? String(d.separacionBienes) : "");
-  setVal("terminos", d.terminosAceptados ? "on" : "");
+  setVal("numerohijos", d.numerohijos ?? "");
+  setVal("Activos", d.activos !== undefined && d.activos !== null && d.activos !== "" ? Number(d.activos).toFixed(2) : "");
+
+  // concesionario (si existe)
+  setVal("concesionario", d.concesionario || "");
+
+  // radios separación de bienes (name="separacion")
+  try {
+    const sep = (d.separacionBienes ?? d.separacion ?? "").toString().toUpperCase();
+    const radios = document.querySelectorAll('input[name="separacion"]');
+    radios.forEach(r => {
+      r.checked = (String(r.value || "").toUpperCase() === sep);
+    });
+  } catch {}
+
+  // términos (checkbox)
+  const term = document.getElementById("terminos");
+  if (term) term.checked = !!d.terminosAceptados;
+
+  // recalcular monto en UI por si algo cambió
+  try { actualizarMonto(); } catch {}
 }
 
 // Exponer para el flujo de precalificación
 window.savePrecalificacionToHistory = function(item) {
   const safe = item && typeof item === "object" ? item : {};
+
+  // Guardamos TODO lo necesario para:
+  // 1) Ver en el historial: cédula + nombre + concesionario
+  // 2) Poder "Cargar" y que se llenen todos los campos del formulario
   const payload = {
     fechaISO: safe.fechaISO || new Date().toISOString(),
+
+    // Identificación + nombres (para mostrar en historial)
     cedulaDeudor: String(safe.cedulaDeudor || ""),
+    nombreDeudor: String(safe.nombreDeudor || safe.nombreRazonSocial || ""),
     cedulaConyuge: String(safe.cedulaConyuge || ""),
+    nombreConyuge: String(safe.nombreConyuge || ""),
+
+    // Scores (útil para auditoría)
+    scoreDeudor: (safe.scoreDeudor ?? ""),
+    scoreConyuge: (safe.scoreConyuge ?? ""),
+
+    // Vehículo + cálculo
     marca: String(safe.marca || ""),
     modelo: String(safe.modelo || ""),
+    valorVehiculo: (safe.valorVehiculo ?? safe.valor ?? ""),
+    entrada: (safe.entrada ?? ""),
+    dispositivo: (safe.dispositivo ?? ""),
     monto: Number(safe.monto || 0),
     plazo: Number(safe.plazo || 0),
     cuota: Number(safe.cuota || 0),
     decisionFinal: String(safe.decisionFinal || ""),
+
+    // Datos del cliente (para re-cargar formulario completo)
+    ingresoDeudor: (safe.ingresoDeudor ?? ""),
+    ingresoConyuge: (safe.ingresoConyuge ?? ""),
+    otrosIngresos: (safe.otrosIngresos ?? ""),
+    estadoCivil: String(safe.estadoCivil || ""),
+    numerohijos: (safe.numerohijos ?? ""),
+    activos: (safe.activos ?? ""),
+    separacionBienes: (safe.separacionBienes ?? safe.separacion ?? ""),
+    terminosAceptados: !!safe.terminosAceptados,
+
+    // Comercial
     concesionario: String(safe.concesionario || ""),
   };
 
@@ -257,6 +315,14 @@ window.savePrecalificacionToExcel = function(item) {
     })
     .catch((e) => {
       console.warn("No se pudo guardar Excel en backend:", e?.message || e);
+      // Muestra el error en pantalla para que no pase silencioso
+      try {
+        const r = document.getElementById("resultados");
+        const msg = String(e?.message || e);
+        if (r && msg) {
+          r.innerHTML += `<p class="hint" style="margin-top:8px;color:#b00020;"><strong>Excel:</strong> ${msg}</p>`;
+        }
+      } catch {}
     });
 };
 
@@ -900,13 +966,29 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
             window.savePrecalificacionToHistory({
               fechaISO: new Date().toISOString(),
               cedulaDeudor,
+              nombreDeudor: nombreRazonSocial,
               cedulaConyuge,
+              nombreConyuge: nombresConyuge,
+              scoreDeudor: score,
+              scoreConyuge: scoreConyuge,
               marca,
               modelo,
+              valorVehiculo,
+              entrada,
+              dispositivo,
               monto: montoTotal,
               plazo,
               cuota: cuotaFinal,
               decisionFinal,
+              concesionario,
+              ingresoDeudor,
+              ingresoConyuge,
+              otrosIngresos,
+              estadoCivil: estadocivil,
+              numerohijos: hijos,
+              activos,
+              separacionBienes,
+              terminosAceptados,
             });
           }
         } catch (e) {
