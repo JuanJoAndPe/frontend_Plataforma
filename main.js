@@ -10,7 +10,7 @@ function actualizarMonto() {
   const valorVehiculo = parseFloat(valorEl.value);
   const entrada = parseFloat(entradaEl.value);
 
-  // 👉 CLAVE: si está vacío o NaN, usar 0
+  // CLAVE: si está vacío o NaN, usar 0
   const dispositivo = dispositivoEl && !isNaN(parseFloat(dispositivoEl.value))
     ? parseFloat(dispositivoEl.value)
     : 0;
@@ -188,7 +188,7 @@ function renderPrecalHistory() {
           <div class="card" style="margin-top:12px;">
             <div class="card__header" style="align-items:flex-start;">
               <div>
-                <h3 class="card__title" style="margin:0;">${ced || "(sin cédula)"} · ${decision || "(sin decisión)"}</h3>
+                <h3 class="card__title" style="margin:0;">${ced || "(sin cédula)"} · ${nombreDeudor || "(sin nombre)"} · ${decision || "(sin decisión)"}</h3>
                 <p class="hint" style="margin:4px 0 0 0;">${fecha}${veh ? ` · ${veh}` : ""}${conc ? ` · ${conc}` : ""}</p>
               </div>
               <div class="card__header-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -234,10 +234,21 @@ function loadHistoryItemToForm(pk) {
 
   setVal("marca", d.marca);
   setVal("modelo", d.modelo);
+  setVal("valor", d.valorVehiculo ? Number(d.valorVehiculo).toFixed(2) : "");
+  setVal("entrada", d.entrada ? Number(d.entrada).toFixed(2) : "");
+  setVal("dispositivo", d.dispositivo ? Number(d.dispositivo).toFixed(2) : "");
   setVal("monto", d.monto ? Number(d.monto).toFixed(2) : "");
   setVal("plazo", d.plazo || "");
   setVal("cedulaDeudor", d.cedulaDeudor);
   setVal("cedulaConyuge", d.cedulaConyuge);
+  setVal("ingresoDeudor", d.ingresoDeudor ? Number(d.ingresoDeudor).toFixed(2) : "");
+  setVal("ingresoConyuge", d.ingresoConyuge ? Number(d.ingresoConyuge).toFixed(2) : "");
+  setVal("otrosIngresos", d.otrosIngresos ? Number(d.otrosIngresos).toFixed(2) : "");
+  setVal("estado_civil", d.estadoCivil || "");
+  setVal("numerohijos", d.numerohijos || "");
+  setVal("Activos", d.activos ? Number(d.activos).toFixed(2) : "");
+  setVal("separacion", d.separacionBienes ? String(d.separacionBienes) : "");
+  setVal("terminos", d.terminosAceptados ? "on" : "");
 }
 
 // Exponer para el flujo de precalificación
@@ -271,7 +282,7 @@ window.savePrecalificacionToHistory = function(item) {
     });
 };
 
-// Exponer para el flujo de precalificación: guardar en Excel (best-effort, no rompe el flujo)
+// Exponer para el flujo de precalificación: guardar en Excel
 window.savePrecalificacionToExcel = function(item) {
   const safe = item && typeof item === "object" ? item : {};
 
