@@ -10,6 +10,7 @@ function actualizarMonto() {
   const valorVehiculo = parseFloat(valorEl.value);
   const entrada = parseFloat(entradaEl.value);
 
+  // 👉 CLAVE: si está vacío o NaN, usar 0
   const dispositivo = dispositivoEl && !isNaN(parseFloat(dispositivoEl.value))
     ? parseFloat(dispositivoEl.value)
     : 0;
@@ -37,13 +38,20 @@ function dataUriToBase64(dataUri) {
   return idx >= 0 ? s.slice(idx + "base64,".length) : s;
 }
 
-// ============================
-// HISTORIAL DE PRECALIFICACIONES (BACKEND)
-// ============================
+
+// ===============================
+// HISTORIAL PRECALIFICACIONES (Backend)
+// ===============================
 const BACKEND_BASE = "https://backend-plataforma-ftw7.onrender.com";
 
 function getAuthToken() {
-  return localStorage.getItem("token") || "";
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("jwt") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("access_token") ||
+    ""
+  );
 }
 
 async function apiFetch(path, options = {}) {
@@ -60,69 +68,43 @@ async function apiFetch(path, options = {}) {
     data = { raw: text };
   }
   if (!r.ok) {
-    const msg = data?.message || data?.error || "Request failed";
+    const msg = data?.message || data?.error || `HTTP ${r.status}`;
     throw new Error(msg);
   }
   return data;
 }
 
-// cache en memoria para render rápido
 let __precalHistCache = [];
 
 async function fetchPrecalHistory(limit = 50) {
-  const data = await apiFetch(`/precalificaciones/historial?limit=${encodeURIComponent(String(limit))}`, {
-    method: "GET",
+  const data = await apiFetch(`/precalificaciones/historial?limit=${encodeURIComponent(String(limit))}`, { method: "GET" });
+  const list =
+    (Array.isArray(data?.items) && data.items) ||
+    (Array.isArray(data?.data) && data.data) ||
+    (Array.isArray(data?.Items) && data.Items) ||
+    (Array.isArray(data?.history) && data.history) ||
+    (Array.isArray(data?.result?.items) && data.result.items) ||
+    [];
+
+  // Ordenar por createdAt/gsi1sk/fechaISO desc si vienen
+  __precalHistCache = list.slice().sort((a, b) => {
+    const da = ((a?.createdAt ?? a?.gsi1sk ?? Date.parse(a?.data?.fechaISO || a?.fechaISO || "")) || 0);
+    const db = ((b?.createdAt ?? b?.gsi1sk ?? Date.parse(b?.data?.fechaISO || b?.fechaISO || "")) || 0);
+    return Number(db) - Number(da);
   });
-  __precalHistCache = Array.isArray(data?.items) ? data.items : [];
   return __precalHistCache;
 }
 
-function savePrecalificacionToHistory(item) {
-  // no bloquea el flujo: best-effort
-  const safe = item && typeof item === "object" ? item : {};
-  const payload = {
-    fechaISO: safe.fechaISO || new Date().toISOString(),
-    cedulaDeudor: (safe.cedulaDeudor || "").toString(),
-    cedulaConyuge: (safe.cedulaConyuge || "").toString(),
-    marca: (safe.marca || "").toString(),
-    modelo: (safe.modelo || "").toString(),
-    monto: Number(safe.monto || 0),
-    plazo: Number(safe.plazo || 0),
-    cuota: Number(safe.cuota || 0),
-    decisionFinal: (safe.decisionFinal || "").toString(),
-    score: (safe.score ?? "").toString(),
-    scoreConyuge: (safe.scoreConyuge ?? "").toString(),
-    concesionario: (safe.concesionario || "").toString(),
-  };
-
-  apiFetch("/precalificaciones/historial", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-    .then(() => {
-      // refresco suave si el usuario está en historial
-      const vHis = document.getElementById("view-historial");
-      if (vHis && vHis.style.display !== "none") renderPrecalHistory();
-    })
-    .catch((e) => console.warn("No se pudo guardar historial en backend:", e?.message || e));
-}
-
 function formatFechaEC(iso) {
-  try {
-    return new Date(iso).toLocaleString("es-EC");
-  } catch {
-    return iso || "";
-  }
+  try { return new Date(iso).toLocaleString("es-EC"); } catch { return iso || ""; }
 }
 
 function renderPrecalHistory() {
   const cont = document.getElementById("hist_list");
   if (!cont) return;
 
-  // Render async (sin romper el flujo existente)
   (async () => {
     try {
-      // Si no hay token, no podemos consultar backend
       if (!getAuthToken()) {
         cont.innerHTML = '<p class="hint" style="margin:0;">Inicia sesión para ver el historial.</p>';
         return;
@@ -134,40 +116,37 @@ function renderPrecalHistory() {
         return;
       }
 
-      const rows = list
-        .map((h) => {
-          const d = h?.data && typeof h.data === "object" ? h.data : h;
-      const fecha = formatFechaEC(d.fechaISO);
-      const ced = (d.cedulaDeudor || "").trim();
-      const decision = (d.decisionFinal || "").trim();
-      const monto = isFinite(Number(d.monto)) ? Number(d.monto).toFixed(2) : "";
-      const cuota = isFinite(Number(d.cuota)) ? Number(d.cuota).toFixed(2) : "";
-      const plazo = d.plazo ? `${d.plazo}m` : "";
-      const veh = `${(d.marca || "").trim()} ${(d.modelo || "").trim()}`.trim();
-      const conc = (d.concesionario || "").trim();
+      cont.innerHTML = list.map((h) => {
+        const d = (h?.data && typeof h.data === "object") ? h.data : h;
+        const pk = h?.pk || d?.pk || "";
+        const fecha = formatFechaEC(d.fechaISO || h?.createdAt);
+        const ced = String(d.cedulaDeudor || "").trim();
+        const decision = String(d.decisionFinal || "").trim();
+        const monto = isFinite(Number(d.monto)) ? Number(d.monto).toFixed(2) : "";
+        const cuota = isFinite(Number(d.cuota)) ? Number(d.cuota).toFixed(2) : "";
+        const plazo = d.plazo ? `${d.plazo}m` : "";
+        const veh = `${String(d.marca||"").trim()} ${String(d.modelo||"").trim()}`.trim();
+        const conc = String(d.concesionario||"").trim();
 
-      return `
-        <div class="card" style="margin-top:12px;">
-          <div class="card__header" style="align-items:flex-start;">
-            <div>
-              <h3 class="card__title" style="margin:0;">${ced || "(sin cédula)"} · ${decision || "(sin decisión)"}</h3>
-              <p class="hint" style="margin:4px 0 0 0;">${fecha}${veh ? ` · ${veh}` : ""}${conc ? ` · ${conc}` : ""}</p>
+        return `
+          <div class="card" style="margin-top:12px;">
+            <div class="card__header" style="align-items:flex-start;">
+              <div>
+                <h3 class="card__title" style="margin:0;">${ced || "(sin cédula)"} · ${decision || "(sin decisión)"}</h3>
+                <p class="hint" style="margin:4px 0 0 0;">${fecha}${veh ? ` · ${veh}` : ""}${conc ? ` · ${conc}` : ""}</p>
+              </div>
+              <div class="card__header-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn--primary" data-hist-load="${pk}">Cargar</button>
+                <button type="button" class="btn btn--secondary" data-hist-del="${pk}">Eliminar</button>
+              </div>
             </div>
-            <div class="card__header-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" class="btn btn--primary" data-hist-load="${h.pk}">Cargar</button>
-              <button type="button" class="btn btn--secondary" data-hist-del="${h.pk}">Eliminar</button>
+            <div style="padding: 0 16px 16px 16px;">
+              <p style="margin:0;"><strong>Monto:</strong> $${monto} · <strong>Plazo:</strong> ${plazo} · <strong>Cuota:</strong> $${cuota}</p>
             </div>
           </div>
+        `;
+      }).join("");
 
-          <div style="padding: 0 16px 16px 16px;">
-            <p style="margin:0;"><strong>Monto:</strong> $${monto} · <strong>Plazo:</strong> ${plazo} · <strong>Cuota:</strong> $${cuota}</p>
-          </div>
-        </div>
-      `;
-        })
-        .join("");
-
-      cont.innerHTML = rows;
     } catch (e) {
       cont.innerHTML = `<p class="hint" style="margin:0;">No se pudo cargar el historial. ${String(e?.message || e)}</p>`;
     }
@@ -188,14 +167,13 @@ function clearPrecalHistory() {
 }
 
 function loadHistoryItemToForm(pk) {
-  const item = (__precalHistCache || []).find((x) => x?.pk === pk);
-  const d = item?.data && typeof item.data === "object" ? item.data : item;
+  const item = (__precalHistCache || []).find((x) => (x?.pk || "") === pk);
+  const d = (item?.data && typeof item.data === "object") ? item.data : item;
   if (!d) return;
 
-  // Rellenar campos (sin forzar nada que ya funciona)
-  const setVal = (elId, v) => {
-    const el = document.getElementById(elId);
-    if (el) el.value = v ?? "";
+  const setVal = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (v ?? "");
   };
 
   setVal("marca", d.marca);
@@ -204,79 +182,38 @@ function loadHistoryItemToForm(pk) {
   setVal("plazo", d.plazo || "");
   setVal("cedulaDeudor", d.cedulaDeudor);
   setVal("cedulaConyuge", d.cedulaConyuge);
-
-  // Si el usuario tenía concesionario en el DOM
-  const concEl = document.getElementById("concesionario");
-  if (concEl && d.concesionario) concEl.value = d.concesionario;
 }
 
-// Inicialización del tab Historial (sin depender de login.js)
-(() => {
-  if (window.__precalHistInited) return;
-  window.__precalHistInited = true;
+// Exponer para el flujo de precalificación
+window.savePrecalificacionToHistory = function(item) {
+  const safe = item && typeof item === "object" ? item : {};
+  const payload = {
+    fechaISO: safe.fechaISO || new Date().toISOString(),
+    cedulaDeudor: String(safe.cedulaDeudor || ""),
+    cedulaConyuge: String(safe.cedulaConyuge || ""),
+    marca: String(safe.marca || ""),
+    modelo: String(safe.modelo || ""),
+    monto: Number(safe.monto || 0),
+    plazo: Number(safe.plazo || 0),
+    cuota: Number(safe.cuota || 0),
+    decisionFinal: String(safe.decisionFinal || ""),
+    concesionario: String(safe.concesionario || ""),
+  };
 
-  const navHist = document.getElementById("nav-historial");
-  const btnClear = document.getElementById("hist_limpiar");
-  const listEl = document.getElementById("hist_list");
-
-  // Render inicial si existe el contenedor
-  if (listEl) renderPrecalHistory();
-
-  // Navegación a historial
-  if (navHist) {
-    navHist.addEventListener("click", () => {
-      const vCot = document.getElementById("view-cotizador");
-      const vPre = document.getElementById("view-precalificacion");
+  apiFetch("/precalificaciones/historial", { method: "POST", body: JSON.stringify(payload) })
+    .then(() => {
       const vHis = document.getElementById("view-historial");
-      if (vCot) vCot.style.display = "none";
-      if (vPre) vPre.style.display = "none";
-      if (vHis) vHis.style.display = "block";
-
-      const title = document.getElementById("view-title");
-      if (title) title.innerText = "Historial";
-
-      // estado activo en sidebar
-      ["nav-cotizador", "nav-precalificacion", "nav-historial"].forEach((id) => {
-        const b = document.getElementById(id);
-        if (!b) return;
-        b.classList.toggle("is-active", id === "nav-historial");
-      });
-
-      renderPrecalHistory();
-    });
-  }
-
-  // Limpiar historial
-  if (btnClear) {
-    btnClear.addEventListener("click", () => {
-      if (!confirm("¿Seguro que deseas limpiar todo el historial?")) return;
-      clearPrecalHistory();
-    });
-  }
-
-  // Delegación: cargar / eliminar
-  if (listEl) {
-    listEl.addEventListener("click", (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-
-      const loadId = t.getAttribute("data-hist-load");
-      const delId = t.getAttribute("data-hist-del");
-
-      if (loadId) {
-        loadHistoryItemToForm(loadId);
-        // llevar al tab de precalificación
-        const navPre = document.getElementById("nav-precalificacion");
-        if (navPre) navPre.click();
-        return;
-      }
-
-      if (delId) {
-        deletePrecalHistoryItem(delId);
+      if (vHis && vHis.style.display !== "none") renderPrecalHistory();
+    })
+    .catch((e) => {
+      console.warn("No se pudo guardar historial en backend:", e?.message || e);
+      const vHis = document.getElementById("view-historial");
+      const cont = document.getElementById("hist_list");
+      if (vHis && vHis.style.display !== "none" && cont) {
+        cont.innerHTML = `<p class="hint" style="margin:0;">No se pudo guardar en historial: ${String(e?.message || e)}</p>`;
       }
     });
-  }
-})();
+};
 
 // Evita "Cannot read properties of null (reading 'addEventListener')"
 const __calcularBtn = document.getElementById('calcularBtn');
@@ -911,28 +848,25 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
         document.getElementById('resultados').innerHTML = resultadosHTML;
         document.getElementById('decision').innerHTML = FinalDecision;
 
-        // ============================
-        // HISTORIAL (LOCAL)
-        // ============================
+        // Guardar historial en backend (best-effort, no rompe el flujo)
         try {
-          savePrecalificacionToHistory({
-            fechaISO: new Date().toISOString(),
-            cedulaDeudor,
-            cedulaConyuge,
-            marca,
-            modelo,
-            monto: montoTotal,
-            plazo,
-            cuota: cuotaFinal,
-            decisionFinal,
-            // valores que ya existen en el flujo
-            score,
-            scoreConyuge,
-            concesionario: (document.getElementById('concesionario')?.value || '').toString(),
-          });
+          if (typeof window.savePrecalificacionToHistory === 'function') {
+            window.savePrecalificacionToHistory({
+              fechaISO: new Date().toISOString(),
+              cedulaDeudor,
+              cedulaConyuge,
+              marca,
+              modelo,
+              monto: montoTotal,
+              plazo,
+              cuota: cuotaFinal,
+              decisionFinal,
+            });
+          }
         } catch (e) {
-          console.warn('No se pudo guardar en historial:', e?.message || e);
+          console.warn('Historial precalificación: no se pudo guardar', e);
         }
+
 
           const doc = new jsPDF();
           const pageHeight = doc.internal.pageSize.height;
@@ -947,7 +881,7 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
           }
 
           // Estilo general
-          doc.setFont('helvetica', );
+          doc.setFont('helvetica', 'normal');
           doc.setFontSize(12);
 
           // Título
@@ -1374,3 +1308,56 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
     });
 
     reiniciarTemporizador();
+
+// ===============================
+// Navegación de vistas (Cotizador / Precalificación / Historial)
+// ===============================
+(function initNavViews() {
+  const navCot = document.getElementById('nav-cotizador');
+  const navPre = document.getElementById('nav-precalificacion');
+  const navHis = document.getElementById('nav-historial');
+
+  const vCot = document.getElementById('view-cotizador');
+  const vPre = document.getElementById('view-precalificacion');
+  const vHis = document.getElementById('view-historial');
+
+  function setActive(id) {
+    ['nav-cotizador','nav-precalificacion','nav-historial'].forEach((x) => {
+      const b = document.getElementById(x);
+      if (b) b.classList.toggle('is-active', x === id);
+    });
+  }
+
+  function show(view) {
+    if (vCot) vCot.style.display = (view === 'cot') ? 'block' : 'none';
+    if (vPre) vPre.style.display = (view === 'pre') ? 'block' : 'none';
+    if (vHis) vHis.style.display = (view === 'his') ? 'block' : 'none';
+
+    const title = document.getElementById('view-title');
+    if (title) title.innerText = (view === 'cot') ? 'Cotizador' : (view === 'pre') ? 'Precalificación' : 'Historial';
+  }
+
+  if (navCot) navCot.addEventListener('click', () => { show('cot'); setActive('nav-cotizador'); });
+  if (navPre) navPre.addEventListener('click', () => { show('pre'); setActive('nav-precalificacion'); });
+  if (navHis) navHis.addEventListener('click', () => { show('his'); setActive('nav-historial'); renderPrecalHistory(); });
+
+  // Botones dentro de historial
+  const histList = document.getElementById('hist_list');
+  if (histList) {
+    histList.addEventListener('click', (ev) => {
+      const t = ev.target;
+      if (!(t instanceof HTMLElement)) return;
+      const del = t.getAttribute('data-hist-del');
+      const load = t.getAttribute('data-hist-load');
+      if (del) deletePrecalHistoryItem(del);
+      if (load) { loadHistoryItemToForm(load); show('pre'); setActive('nav-precalificacion'); }
+    });
+  }
+
+  const btnClear = document.getElementById('hist_limpiar');
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      if (confirm('¿Seguro que deseas limpiar todo el historial?')) clearPrecalHistory();
+    });
+  }
+})();
