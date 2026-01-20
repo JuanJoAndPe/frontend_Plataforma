@@ -1596,10 +1596,21 @@ function loadHistoryItemToForm(pk) {
 
   setVal("marca", d.marca);
   setVal("modelo", d.modelo);
+  setVal("valor", d.valorVehiculo ? Number(d.valorVehiculo).toFixed(2) : "");
+  setVal("entrada", d.entrada ? Number(d.entrada).toFixed(2) : "");
+  setVal("dispositivo", d.dispositivo ? Number(d.dispositivo).toFixed(2) : "");
   setVal("monto", d.monto ? Number(d.monto).toFixed(2) : "");
   setVal("plazo", d.plazo || "");
   setVal("cedulaDeudor", d.cedulaDeudor);
   setVal("cedulaConyuge", d.cedulaConyuge);
+  setVal("ingresoDeudor", d.ingresoDeudor ? Number(d.ingresoDeudor).toFixed(2) : "");
+  setVal("ingresoConyuge", d.ingresoConyuge ? Number(d.ingresoConyuge).toFixed(2) : "");
+  setVal("otrosIngresos", d.otrosIngresos ? Number(d.otrosIngresos).toFixed(2) : "");
+  setVal("estado_civil", d.estadoCivil || "");
+  setVal("numerohijos", d.numerohijos || "");
+  setVal("Activos", d.activos ? Number(d.activos).toFixed(2) : "");
+  setVal("separacion", d.separacionBienes ? String(d.separacionBienes) : "");
+  setVal("terminos", d.terminosAceptados ? "on" : "");
 }
 
 // Exponer para el flujo de precalificación
