@@ -630,8 +630,8 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
           };
 
           const total = obtenerValorNumerico(evaScore) +
-                obtenerValorNumerico(evaNumOpe) +
-                obtenerValorNumerico(evaMesesSinVen);
+                        obtenerValorNumerico(evaNumOpe) +
+                        obtenerValorNumerico(evaMesesSinVen);
           const promedio = total / 3;
 
           let decisionFinal;
@@ -697,8 +697,8 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
           };
 
           const totalcyg = obtenerValorNumerico(evaScoreCyg) +
-                obtenerValorNumerico(evaNumOpeCyg) +
-                obtenerValorNumerico(evaMesesSinVenCyg);
+                          obtenerValorNumerico(evaNumOpeCyg) +
+                          obtenerValorNumerico(evaMesesSinVenCyg);
           const promediocyg = totalcyg / 3;
 
           let decisionFinalcyg;
@@ -919,17 +919,17 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
             const concEl = document.getElementById('concesionario');
             const concesionario = concEl ? String(concEl.value || '').trim() : '';
             window.savePrecalificacionToExcel({
-              cedulaDeudor,
+              cedulaDeudor : cedulaDeudor,
               nombreDeudor: nombreRazonSocial,
-              cedulaConyuge,
+              cedulaConyuge : cedulaConyuge,
               nombreConyuge: nombresConyuge,
               scoreDeudor: score,
               scoreConyuge: scoreConyuge,
-              decisionFinal,
+              decisionFinal: decisionFinal,
               monto: montoTotal,
-              plazo,
+              plazo: plazo,
               cuota: cuotaFinal,
-              concesionario,
+              concesionario: concesionario,
             });
           }
         } catch (e) {
