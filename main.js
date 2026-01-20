@@ -1187,7 +1187,7 @@ if (__calcularBtn) __calcularBtn.addEventListener('click', function () {
           const token = localStorage.getItem('token');
 
           // Adjuntar reporte al correo
-          const nombreDocAnalisis = `Análisis Crediticio ${nombreRazonSocial}.pdf`;
+          const nombreDocAnalisis = `Precalificación ${nombreRazonSocial}.pdf`;
           const pdfDataUriAnalisis = doc.output('datauristring');
           const pdfB64Analisis = dataUriToBase64(pdfDataUriAnalisis);
 
