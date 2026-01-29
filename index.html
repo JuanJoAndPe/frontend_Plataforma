@@ -4,10 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plataforma TÁCTIQA</title>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
-
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.v2.css" />
 </head>
 
 <body>
@@ -15,25 +13,21 @@
     <img src="src/img/logo horizontal-01.png" alt="logo Tactiqa" width="360" />
   </div>
 
-  <!-- LOGIN -->
-  <div id="login-container" class="login" style="display: block; width: 150px; alignment-baseline:center; padding-left: 42%;">
+  <div id="login-container" class="login" style="display: block; width: 150px; padding-left: 42%;">
     <h2 style="color:#0d0035;">Iniciar Sesión</h2>
     <form id="login-form">
       <div>
         <label for="username" style="color:#0d0035;">Usuario:</label>
         <input type="text" id="username" required />
       </div>
-
       <div style="padding-top:10px;">
         <label for="password" style="color:#0d0035;">Contraseña:</label>
         <input type="password" id="password" required />
       </div>
-
       <button type="submit">Ingresar</button>
     </form>
   </div>
 
-  <!-- APP -->
   <div id="app-container" class="app" style="display: none;">
     <aside class="sidebar">
       <div class="sidebar__brand">Crédito Automotriz</div>
@@ -46,46 +40,24 @@
 
     <main class="main">
       <header class="topbar">
-        <div class="topbar__title" id="view-title">Cotizador</div>
+        <div class="topbar__title" id="view-title">Gestión de Crédito</div>
         <div class="topbar__actions">
           <button id="logout-btn" type="button">Cerrar Sesión</button>
         </div>
       </header>
 
-      <!-- =================== COTIZADOR =================== -->
       <section id="view-cotizador" class="view">
-        <!-- Formulario -->
         <div class="card">
           <div class="contenedor">
+            <div class="item"><label for="ct_pvp">PVP + IVA ($)</label><input id="ct_pvp" type="number" min="0" /></div>
+            <div class="item"><label for="ct_entrada">Entrada ($)</label><input id="ct_entrada" type="number" min="0" /></div>
+            <div class="item"><label>Entrada (%)</label><input id="ct_entrada_pct" type="number" readonly /></div>
+            <div class="item"><label>Tasa (%)</label><input id="ct_tasa" type="number" value="15.60" readonly /></div>
+            <div class="item"><label>Saldo Vehículo ($)</label><input id="ct_saldo" type="number" readonly /></div>
             <div class="item">
-              <label for="ct_pvp">PVP + IVA ($)</label>
-              <input id="ct_pvp" type="number" min="0" placeholder="Ej: 25000" />
-            </div>
-
-            <div class="item">
-              <label for="ct_entrada">Entrada ($)</label>
-              <input id="ct_entrada" type="number" min="0" placeholder="Ej: 5000" />
-            </div>
-
-            <div class="item">
-              <label for="ct_entrada_pct">Entrada (%)</label>
-              <input id="ct_entrada_pct" type="number" min="0" readonly />
-            </div>
-
-            <div class="item">
-              <label for="ct_tasa">Tasa (%)</label>
-              <input id="ct_tasa" type="number" min="0" step="0.01" value="15.60" readonly />
-            </div>
-
-            <div class="item">
-              <label for="ct_saldo">Saldo Vehículo ($)</label>
-              <input id="ct_saldo" type="number" min="0" step="0.01" readonly />
-            </div>
-
-            <div class="item">
-              <label for="ct_plazo">Plazo financiamiento (meses)</label>
+              <label>Plazo financiamiento</label>
               <select id="ct_plazo">
-                <option value="" selected>Seleccionar</option>
+                <option value="">Seleccionar</option>
                 <option value="12">12</option>
                 <option value="24">24</option>
                 <option value="36">36</option>
@@ -94,250 +66,96 @@
                 <option value="72">72</option>
               </select>
             </div>
-
-            <div class="item">
-              <label for="ct_tasa_desg">Tasa Seguro Desgravamen (anual %)</label>
-              <input id="ct_tasa_desg" type="number" min="0" step="0.01" value="0.60" readonly />
-            </div>
-
-            <div class="item">
-              <label for="ct_tasa_seguro">Tasa Seguro Vehicular (anual %)</label>
-              <input id="ct_tasa_seguro" type="number" min="0" step="0.01" value="4.09" readonly />
-            </div>
-
-            <div class="item">
-              <label for="ct_plazo_seguro">Plazo Seguro Vehicular (meses)</label>
-              <select id="ct_plazo_seguro">
-                <option value="" selected>Seleccionar</option>
-                <option value="12">12</option>
-                <option value="24">24</option>
-                <option value="36">36</option>
-                <option value="48">48</option>
-                <option value="60">60</option>
-              </select>
-            </div>
-
-            <div class="item">
-              <label for="ct_gps">Dispositivo GPS</label>
-              <input type="number" id="ct_gps" min="0">
-            </div>
-
+            <div class="item"><label>Tasa Desgravamen (%)</label><input id="ct_tasa_desg" type="number" value="0.60" readonly /></div>
+            <div class="item"><label>Tasa Seguro Veh. (%)</label><input id="ct_tasa_seguro" type="number" value="4.09" readonly /></div>
+            <div class="item"><label>Plazo Seguro</label><select id="ct_plazo_seguro"><option value="12">12</option><option value="24">24</option><option value="36">36</option><option value="48">48</option><option value="60">60</option></select></div>
+            <div class="item"><label>GPS</label><input type="number" id="ct_gps" min="0"></div>
+            
             <div class="actions">
               <button id="ct_cotizar" type="button" class="btn btn--primary">Cotizar</button>
-              <button id="ct_limpiar" type="button" class="btn btn--secondary">Limpiar datos</button>
+              <button id="ct_limpiar" type="button" class="btn btn--secondary">Limpiar</button>
             </div>
-
-            <p class="hint">
-              La cuota es referencial. Valores de seguro vehicular y desgravamen están sujetos a cambios.
-            </p>
           </div>
         </div>
-        
-        <!-- Cotizaciones -->
         <div class="cotizaciones-wrapper" style="margin-top: 20px;">
           <div class="card">
             <div class="card__header">
-              <h2 class="card__title">Cotizaciones</h2>
-              <div class="card__header-actions">
-                <button id="ct_limpiar_cotizaciones" type="button" class="btn btn--secondary">
-                  Limpiar cotizaciones
-                </button>
-              </div>
+              <h2 class="card__title">Cotizaciones Guardadas</h2>
+              <div class="card__header-actions"><button id="ct_limpiar_cotizaciones" class="btn btn--secondary">Limpiar todo</button></div>
             </div>
-
-            <div id="ct_cotizaciones_list" class="cotizaciones-list">
-              <p class="hint" style="margin:0;">Aún no hay cotizaciones. Presiona <strong>Cotizar</strong>.</p>
-            </div>
+            <div id="ct_cotizaciones_list" class="cotizaciones-list"><p class="hint">Sin cotizaciones.</p></div>
           </div>
         </div>
       </section>
 
-      <!-- =================== PRECALIFICACIÓN =================== -->
       <section id="view-precalificacion" class="view" style="display:none">
         <div class="card">
           <div class="contenedor">
-            <div class="item">
-              <label for="marca">Marca del Vehículo:</label>
-              <input type="text" id="marca" placeholder="Marca del Vehículo" style="text-transform: uppercase;" />
-            </div>
-
-            <div class="item">
-              <label for="modelo">Modelo:</label>
-              <input type="text" id="modelo" placeholder="Modelo" style="text-transform: uppercase;" />
-            </div>
-
-            <div class="item">
-              <label for="valor">Valor del Vehículo:</label>
-              <input type="number" id="valor" placeholder="PVP" min="0" oninput="actualizarMonto();" required />
-            </div>
-
-            <div class="item">
-              <label for="entrada">Entrada:</label>
-              <input type="number" id="entrada" placeholder="Entrada" min="0" oninput="actualizarMonto();" required />
-            </div>
-
-            <div class="item">
-              <label for="dispositivo">Dispositivo:</label>
-              <input type="number" id="dispositivo" placeholder="PVP Dispositivo" min="0" oninput="actualizarMonto();" required />
-            </div>
-
-            <div class="item">
-              <label for="monto">Monto a Financiar:</label>
-              <input style="color:grey" type="number" id="monto" placeholder="Monto a Financiar" readonly />
-            </div>
-
+            <div class="item"><label>Marca:</label><input type="text" id="marca" style="text-transform: uppercase;" /></div>
+            <div class="item"><label>Modelo:</label><input type="text" id="modelo" style="text-transform: uppercase;" /></div>
+            <div class="item"><label>Valor Vehículo:</label><input type="number" id="valor" oninput="actualizarMonto();" required /></div>
+            <div class="item"><label>Entrada:</label><input type="number" id="entrada" oninput="actualizarMonto();" required /></div>
+            <div class="item"><label>Dispositivo:</label><input type="number" id="dispositivo" oninput="actualizarMonto();" required /></div>
+            <div class="item"><label>Monto a Financiar:</label><input style="color:grey" type="number" id="monto" readonly /></div>
             <div class="item" style="width: 150px;">
-              <label for="plazo">Plazo:</label>
-              <select id="plazo" required>
-                <option value="" selected>Seleccionar</option>
-                <option value="12">12</option>
-                <option value="24">24</option>
-                <option value="36">36</option>
-                <option value="48">48</option>
-                <option value="60">60</option>
-                <option value="72">72</option>
-              </select>
+              <label>Plazo:</label>
+              <select id="plazo" required><option value="">Seleccionar</option><option value="12">12</option><option value="24">24</option><option value="36">36</option><option value="48">48</option><option value="60">60</option><option value="72">72</option></select>
             </div>
-
-            <div class="item">
-              <label for="concesionario">Concesionario:</label>
-              <input type="text" id="concesionario" placeholder="Inmotruck/Mavesa/Proauto"/>
-            </div>
-            
-            <div class="item">
-              <label for="cedulaDeudor">Cédula Deudor:</label>
-              <input type="text" id="cedulaDeudor" placeholder="Ingrese la cédula" minlength="10" maxlength="10" required />
-            </div>
-
-            <div class="item">
-              <label for="cedulaConyuge">Cédula Cónyuge:</label>
-              <input type="text" id="cedulaConyuge" placeholder="Ingrese la cédula" minlength="10" maxlength="10" />
-            </div>
-
-            <div class="item">
-              <label for="ingresoDeudor">Ingreso del Deudor:</label>
-              <input type="number" id="ingresoDeudor" placeholder="Ingreso mensual del deudor" min="0"
-                     oninput="this.value = Math.round(this.value);" required />
-            </div>
-
-            <div class="item">
-              <label for="ingresoConyuge">Ingreso del Cónyuge:</label>
-              <input type="number" id="ingresoConyuge" placeholder="Ingreso mensual del cónyuge" min="0"
-                     oninput="this.value = Math.round(this.value);" />
-            </div>         
-
-            <div class="item">
-              <label for="estado_civil">Estado Civil:</label>
-              <select id="estado_civil" required>
-                <option value="" selected>Seleccionar</option>
-                <option value="Soltera/o">Soltera/o</option>
-                <option value="Casada/o">Casada/o</option>
-                <option value="Divorciada/o">Divorciada/o</option>
-                <option value="Unión Libre">Unión Libre</option>
-              </select>
-            </div>
-
-            <div class="item">
-              <label for="otrosIngresos">Otros Ingresos:</label>
-              <input type="number" id="otrosIngresos" placeholder="Otros ingresos" min="0"
-                     oninput="this.value = Math.round(this.value);" />
-            </div>
-
+            <div class="item"><label>Concesionario:</label><input type="text" id="concesionario"/></div>
+            <div class="item"><label>Cédula Deudor:</label><input type="text" id="cedulaDeudor" maxlength="10" required /></div>
+            <div class="item"><label>Cédula Cónyuge:</label><input type="text" id="cedulaConyuge" maxlength="10" /></div>
+            <div class="item"><label>Ingreso Deudor:</label><input type="number" id="ingresoDeudor" required /></div>
+            <div class="item"><label>Ingreso Cónyuge:</label><input type="number" id="ingresoConyuge" /></div>         
+            <div class="item"><label>Estado Civil:</label><select id="estado_civil" required><option value="">Seleccionar</option><option value="Soltera/o">Soltera/o</option><option value="Casada/o">Casada/o</option><option value="Unión Libre">Unión Libre</option></select></div>
+            <div class="item"><label>Otros Ingresos:</label><input type="number" id="otrosIngresos" /></div>
             <div class="checkbox">
               <label>Separación de bienes</label>
               <label class="check"><input type="radio" name="separacion" value="SI" /> Sí</label>
               <label class="check"><input type="radio" name="separacion" value="NO" /> No</label>
             </div>
-
-            <div class="item">
-              <label for="numerohijos">Número de hijos</label>
-              <input type="number" id="numerohijos" placeholder="Detalle el número de hijos"
-                     oninput="this.value = Math.round(this.value);" required />
-            </div>
-
-            <div class="item">
-              <label for="gastosFamiliaresTotales">Gastos Familiares Totales:</label>
-              <input style="color:grey;" type="text" id="gastosFamiliaresTotales" name="gastosFamiliaresTotales" readonly />
-            </div>
-
-            <div class="item">
-              <label for="gastosFinancierosDeudor">Gastos Financieros del Deudor:</label>
-              <input style="color:grey;" type="number" id="gastosFinancierosDeudor" min="0"
-                     oninput="this.value = Math.round(this.value);" readonly />
-            </div>
-
-            <div class="item">
-              <label for="Activos">Activos (Casa/Terreno/Vehículo)</label>
-              <input type="number" id="Activos" placeholder="Detalle valor de sus activos" min="0"
-                     oninput="this.value = Math.round(this.value);" required />
-            </div>
-
-            <div class="item">
-              <label for="gastosFinancierosConyuge">Gastos Financieros del Cónyuge:</label>
-              <input style="color:grey;" type="number" id="gastosFinancierosConyuge" min="0"
-                     oninput="this.value = Math.round(this.value);" readonly />
-            </div>
-
-            <div class="checkbox">
-              <label class="check">
-                <input id="terminos" type="checkbox" required />
-                <a href="https://tactiqaec.com/terminos_condiciones.html" target="_blank" rel="noreferrer">Acepto términos y condiciones</a>
-              </label>
-            </div>
-
-            <div></div>
-
-            <div class="item item--full item--center" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <div class="item"><label>Número de hijos</label><input type="number" id="numerohijos" required /></div>
+            
+            <div class="item"><label>Activos:</label><input type="number" id="Activos" required /></div>
+            <div class="item"><label>Gastos Familiares:</label><input type="number" id="gastosFamiliaresTotales" readonly /></div>
+            <div class="item"><label>Gastos Fin. Deudor:</label><input type="number" id="gastosFinancierosDeudor" readonly /></div>
+            <div class="item"><label>Gastos Fin. Cónyuge:</label><input type="number" id="gastosFinancierosConyuge" readonly /></div>
+            
+            <div class="item item--full item--center" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
               <button id="calcularBtn" type="button">Calcular Preaprobación</button>
             </div>
-
-            <div class="item item--full item--center" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <div class="item item--full item--center" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
               <button id="precalBtnLimpiar" type="button" class="btn btn--secondary">Limpiar formulario</button>
             </div>
           </div>
         </div>
 
         <div class="card" style="margin-top: 20px;">
-        <div class="card__header">
-          <h3 class="card__title">Resultado</h3>
+          <div class="card__header"><h3 class="card__title">Resultado del Análisis</h3></div>
+          <div id="resultados"></div>
+          <div id="decision" class="decision"></div>
         </div>
-        <div id="resultados"></div>
-        <div id="decision" class="decision"></div>
-      </div>
 
-      <!-- REPORTE AVAL SOLO PRECALIFICACIÓN -->
-      <section id="aval-report" class="aval-report" style="display:none; margin-top: 20px;">
-        <div class="aval-report__toolbar no-print">
-          <button id="aval-btn-download" type="button" class="btn btn--primary">Descargar PDF</button>
-        </div>
-        <div id="aval-report-content"></div>
-      </section>
+        <section id="aval-report-section" class="card" style="display:none; margin-top: 20px;">
+          <div class="card__header">
+            <h3 class="card__title" style="color: #002e5f;">Documentos Buró de Crédito</h3>
+          </div>
+          <div id="aval-download-container" style="padding: 20px;"></div>
+        </section>
 
       </section>
 
-      <!-- =================== HISTORIAL PRECALIFICACIONES =================== -->
       <section id="view-historial" class="view" style="display:none">
         <div class="card">
-          <div class="card__header">
-            <h2 class="card__title">Historial de Precalificaciones</h2>
-            <div class="card__header-actions">
-            </div>
-          </div>
-
-          <div id="hist_list" class="cotizaciones-list">
-            <p class="hint" style="margin:0;">Aún no hay precalificaciones guardadas.</p>
-          </div>
+          <div class="card__header"><h2 class="card__title">Historial de Consultas</h2></div>
+          <div id="hist_list" class="cotizaciones-list"><p class="hint">No hay historial disponible.</p></div>
         </div>
-
-        <p class="hint" style="margin-top:12px;">Tip: este historial se guarda en el servidor por usuario.</p>
       </section>
-
     </main>
   </div>
 
-  <script src="avalReport.js"></script>
-  <script src="main.js"></script>
-  <script src="cotizador.js"></script>
-  <script src="login.js"></script>
+  <script src="avalReport.v2.js"></script>
+  <script src="main.v3.js"></script>
+  <script src="cotizador.v2.js"></script>
+  <script src="login.v2.js"></script>
 </body>
 </html>
